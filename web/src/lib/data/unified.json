@@ -1,0 +1,73 @@
+{
+  "scraped_at": "2026-06-23T23:00:00Z",
+  "discounts": [
+    {
+      "id": "bbva-1",
+      "bank": "bbva",
+      "canonical_category": "gastronomia",
+      "store_name": "Patagonia Refugio",
+      "title": "20% de descuento y 3 cuotas",
+      "description": "Exclusivo con tarjetas de crédito de BBVA. Válido miércoles y jueves.",
+      "discount_pct": 20,
+      "installments": 3,
+      "valid_from": "2026-06-01",
+      "valid_until": "2026-07-31",
+      "days_active": [3, 4],
+      "card_types": ["credito_visa", "credito_mastercard"],
+      "url": "https://www.cervezapatagonia.com.ar",
+      "image_url": "https://go.bbva.com.ar/fgo/sites/default/files/styles/logo_comercio/public/logo-patagonia.png",
+      "raw": {}
+    },
+    {
+      "id": "santander-2",
+      "bank": "santander",
+      "canonical_category": "moda",
+      "store_name": "Zara",
+      "title": "30% de ahorro",
+      "description": "30% de ahorro los días lunes y martes con tarjetas de débito y crédito Visa de Santander.",
+      "discount_pct": 30,
+      "installments": 0,
+      "valid_from": "2026-06-01",
+      "valid_until": "2026-12-31",
+      "days_active": [1, 2],
+      "card_types": ["credito_visa", "debito_visa"],
+      "url": "https://www.zara.com/ar",
+      "image_url": null,
+      "raw": {}
+    },
+    {
+      "id": "bbva-3",
+      "bank": "bbva",
+      "canonical_category": "tecnologia",
+      "store_name": "Frávega",
+      "title": "6 cuotas sin interés",
+      "description": "6 cuotas sin interés en productos seleccionados todos los días.",
+      "discount_pct": 0,
+      "installments": 6,
+      "valid_from": "2026-06-15",
+      "valid_until": "2026-06-30",
+      "days_active": [-1],
+      "card_types": ["credito_visa", "credito_mastercard"],
+      "url": "https://www.fravega.com",
+      "image_url": null,
+      "raw": {}
+    },
+    {
+      "id": "santander-4",
+      "bank": "santander",
+      "canonical_category": "supermercados",
+      "store_name": "Carrefour",
+      "title": "15% de descuento",
+      "description": "15% de descuento los jueves con tarjeta de débito Santander.",
+      "discount_pct": 15,
+      "installments": 0,
+      "valid_from": "2026-06-01",
+      "valid_until": "2026-08-31",
+      "days_active": [4],
+      "card_types": ["debito_visa"],
+      "url": null,
+      "image_url": null,
+      "raw": {}
+    }
+  ]
+}
