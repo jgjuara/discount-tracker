@@ -82,6 +82,9 @@ def main():
             normalized = normalize_promo(raw, rubro_id)
             all_normalized_promos.append(normalized)
 
+    if not all_normalized_promos:
+        raise BBVAScraperError("Fetched 0 BBVA promotions. This indicates a scraping failure or API block.")
+
     # Ensure output directory exists
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:

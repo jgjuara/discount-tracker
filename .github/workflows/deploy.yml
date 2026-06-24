@@ -6,10 +6,15 @@ on:
     paths:
       - 'data/**'
       - 'web/**'
+  workflow_run:
+    workflows: ["Daily Scrape"]
+    types:
+      - completed
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run == null || github.event.workflow_run.conclusion == 'success' }}
     permissions:
       pages: write
       id-token: write

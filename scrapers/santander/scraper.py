@@ -88,28 +88,32 @@ class SantanderScraper:
             canonical_cat = SANTANDER_CAT_MAP.get(cat, "bazar")
             page = 1
             while True:
-                brands = self.fetch_brands_page(category=cat, page=page, limit=50)
-                if not brands:
+                try:
+                    brands = self.fetch_brands_page(category=cat, page=page, limit=50)
+                    if not brands:
+                        break
+                    for brand in brands:
+                        brand_id = brand.get("id")
+                        brand_name = brand.get("name")
+                        if not brand_id:
+                            continue
+                        try:
+                            detail = self.fetch_brand_detail(brand_id)
+                            pubs = detail.get("publications", [])
+                            for pub in pubs:
+                                pub_id = pub.get("id")
+                                uniq_key = (brand_id, pub_id)
+                                if uniq_key not in seen_publications:
+                                    seen_publications.add(uniq_key)
+                                    normalized = normalize_brand(pub, brand_name, canonical_cat)
+                                    all_normalized.append(normalized)
+                            time.sleep(0.5)
+                        except Exception as e:
+                            print(f"Error fetching brand detail {brand_id}: {e}")
+                    page += 1
+                except Exception as e:
+                    print(f"Warning: failed to fetch brands page {page} for STA category {cat}: {e}. Stopping pagination for this category.")
                     break
-                for brand in brands:
-                    brand_id = brand.get("id")
-                    brand_name = brand.get("name")
-                    if not brand_id:
-                        continue
-                    try:
-                        detail = self.fetch_brand_detail(brand_id)
-                        pubs = detail.get("publications", [])
-                        for pub in pubs:
-                            pub_id = pub.get("id")
-                            uniq_key = (brand_id, pub_id)
-                            if uniq_key not in seen_publications:
-                                seen_publications.add(uniq_key)
-                                normalized = normalize_brand(pub, brand_name, canonical_cat)
-                                all_normalized.append(normalized)
-                        time.sleep(0.5)
-                    except Exception as e:
-                        print(f"Error fetching brand detail {brand_id}: {e}")
-                page += 1
 
         # 3. Fetch EXC categories
         try:
@@ -123,28 +127,32 @@ class SantanderScraper:
             canonical_cat = SANTANDER_CAT_MAP.get(cat, "cuidado_personal")
             page = 1
             while True:
-                brands = self.fetch_brands_page(exclusive=cat, page=page, limit=50)
-                if not brands:
+                try:
+                    brands = self.fetch_brands_page(exclusive=cat, page=page, limit=50)
+                    if not brands:
+                        break
+                    for brand in brands:
+                        brand_id = brand.get("id")
+                        brand_name = brand.get("name")
+                        if not brand_id:
+                            continue
+                        try:
+                            detail = self.fetch_brand_detail(brand_id)
+                            pubs = detail.get("publications", [])
+                            for pub in pubs:
+                                pub_id = pub.get("id")
+                                uniq_key = (brand_id, pub_id)
+                                if uniq_key not in seen_publications:
+                                    seen_publications.add(uniq_key)
+                                    normalized = normalize_brand(pub, brand_name, canonical_cat)
+                                    all_normalized.append(normalized)
+                            time.sleep(0.5)
+                        except Exception as e:
+                            print(f"Error fetching brand detail {brand_id}: {e}")
+                    page += 1
+                except Exception as e:
+                    print(f"Warning: failed to fetch brands page {page} for EXC category {cat}: {e}. Stopping pagination for this category.")
                     break
-                for brand in brands:
-                    brand_id = brand.get("id")
-                    brand_name = brand.get("name")
-                    if not brand_id:
-                        continue
-                    try:
-                        detail = self.fetch_brand_detail(brand_id)
-                        pubs = detail.get("publications", [])
-                        for pub in pubs:
-                            pub_id = pub.get("id")
-                            uniq_key = (brand_id, pub_id)
-                            if uniq_key not in seen_publications:
-                                seen_publications.add(uniq_key)
-                                normalized = normalize_brand(pub, brand_name, canonical_cat)
-                                all_normalized.append(normalized)
-                        time.sleep(0.5)
-                    except Exception as e:
-                        print(f"Error fetching brand detail {brand_id}: {e}")
-                page += 1
 
         return all_normalized
 
@@ -157,6 +165,9 @@ def main():
     print("Scraping Santander benefits...")
     all_normalized_promos = scraper.fetch_all()
     print(f"Fetched {len(all_normalized_promos)} normalized Santander promos.")
+
+    if not all_normalized_promos:
+        raise SantanderScraperError("Fetched 0 Santander promotions. This indicates a scraping failure or API block.")
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:
