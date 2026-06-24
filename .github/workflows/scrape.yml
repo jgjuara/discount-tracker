@@ -1,0 +1,44 @@
+name: Daily Scrape
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # 06:00 UTC = 03:00 ART
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r scrapers/requirements.txt
+
+      - name: Run BBVA scraper
+        run: python -m scrapers.bbva.scraper --output data/bbva.json
+
+      - name: Run Santander scraper
+        run: python -m scrapers.santander.scraper --output data/santander.json
+
+      - name: Merge datasets
+        run: python -m scrapers.merger --bbva data/bbva.json --santander data/santander.json --output data/unified.json
+
+      - name: Commit and push data
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/
+          git diff --staged --quiet || git commit -m "chore(data): daily scrape $(date -u +%Y-%m-%d)"
+          git push

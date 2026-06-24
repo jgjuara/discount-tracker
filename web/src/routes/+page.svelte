@@ -1,5 +1,6 @@
 <script>
 	import { onMount } from 'svelte';
+	import { base } from '$app/paths';
 	import SearchBar from '$lib/components/SearchBar.svelte';
 	import FilterPanel from '$lib/components/FilterPanel.svelte';
 	import DiscountGrid from '$lib/components/DiscountGrid.svelte';

@@ -1,4 +1,5 @@
 <script>
+	import { base } from '$app/paths';
 	import BankBadge from '$lib/components/BankBadge.svelte';
 	import { CANONICAL_CATEGORIES } from '$lib/utils/taxonomy.js';
 
@@ -53,7 +54,7 @@
 
 <div class="detail-container">
 	<div class="navigation-row">
-		<a href="/" class="back-link">
+		<a href="{base}/" class="back-link">
 			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="back-icon">
 				<line x1="19" y1="12" x2="5" y2="12"></line>
 				<polyline points="12 19 5 12 12 5"></polyline>
@@ -67,7 +68,7 @@
 			<span class="error-emoji">⚠️</span>
 			<h2>Descuento no encontrado</h2>
 			<p>El beneficio seleccionado no existe o ya no se encuentra vigente en el sistema.</p>
-			<a href="/" class="back-button-fill">Volver al inicio</a>
+			<a href="{base}/" class="back-button-fill">Volver al inicio</a>
 		</div>
 	{:else}
 		<div class="detail-card" style="--detail-glow: {glowColor}; --detail-theme: {themeColor}">

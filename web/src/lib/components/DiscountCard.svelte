@@ -1,4 +1,5 @@
 <script>
+	import { base } from '$app/paths';
 	import BankBadge from './BankBadge.svelte';
 	import { CANONICAL_CATEGORIES } from '../utils/taxonomy.js';
 
@@ -16,7 +17,7 @@
 	const hoverBorderColor = $derived(discount.bank === 'bbva' ? '#004A97' : '#EC0000');
 </script>
 
-<a href="/descuento/{discount.bank}/{discount.id}" class="discount-card" style="--hover-glow: {glowColor}; --hover-border: {hoverBorderColor}">
+<a href="{base}/descuento/{discount.bank}/{discount.id}" class="discount-card" style="--hover-glow: {glowColor}; --hover-border: {hoverBorderColor}">
 	<div class="card-image-container">
 		{#if discount.image_url}
 			<img src={discount.image_url} alt={discount.store_name} class="card-image" loading="lazy" />

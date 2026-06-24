@@ -1,0 +1,128 @@
+{
+  "timestamp": "2026-06-20 16:17:00",
+  "base_url": "https://go.bbva.com.ar/willgo/fgo/API/v3",
+  "endpoint_validation": {
+    "/rubros": {
+      "status_code": 404,
+      "exists": false
+    },
+    "/categories": {
+      "status_code": 404,
+      "exists": false
+    },
+    "/filters": {
+      "status_code": 404,
+      "exists": false
+    },
+    "/config": {
+      "status_code": 404,
+      "exists": false
+    },
+    "/subrubros": {
+      "status_code": 404,
+      "exists": false
+    },
+    "/communications/85443": {
+      "status_code": 404,
+      "exists": false,
+      "message": "Detail endpoint does not exist under plural path"
+    },
+    "/communication/85443": {
+      "status_code": 200,
+      "exists": true,
+      "description": "Detail endpoint exists under singular path /communication/{id}"
+    }
+  },
+  "active_rubros": {
+    "3": {
+      "category": "Gastronomía",
+      "count": 270,
+      "samples": ["Farinelli 20%", "Casa Saenz 20%"]
+    },
+    "4": {
+      "category": "Entretenimiento / Espectáculos",
+      "count": 48,
+      "samples": ["Rocky 30% y 3 cuotas", "Disney On Ice 6 cuotas", "Wwe 2026 6 cuotas"]
+    },
+    "8": {
+      "category": "Cuidado Personal / Perfumerías / Farmacias",
+      "count": 83,
+      "samples": ["Farmaonline 10% y 3 cuotas", "Parfumerie 6 cuotas"]
+    },
+    "13": {
+      "category": "Turismo / Viajes",
+      "count": 9,
+      "samples": ["Assist Card 12 cuotas sin interés", "Duty Free Shop"]
+    },
+    "26": {
+      "category": "Supermercados",
+      "count": 88,
+      "samples": ["Coto 30%", "Supermercados Kilbel Beneficio exclusivo MODO"]
+    },
+    "170": {
+      "category": "Moda y accesorios",
+      "count": 336,
+      "samples": ["Zara 3 cuotas", "Sarkany 20% y 6 cuotas", "Nike 6 cuotas"]
+    },
+    "173": {
+      "category": "Hogar, construcción y decoración",
+      "count": 138,
+      "samples": ["Oscar Barbieri 12 cuotas", "Rouge Maison 10%", "Maxi Ceramicos Floresta 9 cuotas"]
+    },
+    "174": {
+      "category": "Automotores (Servicios, gomerías y concesionarias)",
+      "count": 41,
+      "samples": ["Subaru 12 cuotas", "Norauto 6 cuotas", "Bridgestone Argentina"]
+    },
+    "175": {
+      "category": "Jugueterías / Niños",
+      "count": 39,
+      "samples": ["Kinderland 10% y 3 cuotas", "Cebra 20% y 3 cuotas", "Osito Azul"]
+    },
+    "184": {
+      "category": "Deportes, gimnasios y educación",
+      "count": 19,
+      "samples": ["River Plate Instituto 10%", "Megatlon 15% y 12 cuotas"]
+    },
+    "192": {
+      "category": "Electro y tecnología",
+      "count": 137,
+      "samples": ["Bringeri Hogar 12 cuotas", "Jumbo Beneficio exclusivo MODO (Electro)"]
+    },
+    "195": {
+      "category": "Bazar, regalos y vinos",
+      "count": 54,
+      "samples": ["Bonvivir .", "Frappe 30%", "Purpura Floreria 30% y 6 cuotas"]
+    }
+  },
+  "pagination_testing": {
+    "pager=0": {
+      "status_code": 200,
+      "behavior": "Returns first 20 items successfully"
+    },
+    "pager=1": {
+      "status_code": 200,
+      "behavior": "Returns next 20 items successfully"
+    },
+    "pager=16": {
+      "status_code": 200,
+      "behavior": "Returns the last page of data (remaining items) successfully"
+    },
+    "pager=17": {
+      "status_code": 200,
+      "behavior": "Returns empty data array [] representing page out of bounds"
+    },
+    "pager=-1": {
+      "status_code": 500,
+      "behavior": "Fails with Internal Server Error (backend database/casting error)"
+    },
+    "pager=abc": {
+      "status_code": 500,
+      "behavior": "Fails with Internal Server Error (backend database/casting error)"
+    }
+  },
+  "query_parameters_testing": {
+    "parameters_tested": ["q", "query", "search", "texto", "provincia", "sort", "orden", "idCampania"],
+    "behavior": "All tested parameters are completely ignored by the endpoint. They do not filter or re-order results."
+  }
+}
