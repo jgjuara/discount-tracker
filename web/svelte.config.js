@@ -12,6 +12,10 @@ const config = {
 		adapter: adapter(),
 		paths: {
 			base: prod ? '/discount-tracker' : ''
+		},
+		prerender: {
+			handleHttpError: 'warn',
+			handleUnseenRoutes: 'warn'
 		}
 	}
 };
