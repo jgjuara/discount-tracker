@@ -156,18 +156,48 @@ class SantanderScraper:
 
         return all_normalized
 
+    def process_raw_input(self, raw_input_path: str) -> list[dict]:
+        with open(raw_input_path, "r", encoding="utf-8") as f:
+            raw_data = json.load(f)
+
+        all_normalized = []
+        seen_publications = set()
+
+        for brand in raw_data:
+            brand_id = brand.get("brand_id")
+            brand_name = brand.get("brand_name")
+            category = brand.get("category")
+            canonical_cat = SANTANDER_CAT_MAP.get(category, "bazar")
+            
+            pubs = brand.get("publications", [])
+            for pub in pubs:
+                pub_id = pub.get("id")
+                uniq_key = (brand_id, pub_id)
+                if uniq_key not in seen_publications:
+                    seen_publications.add(uniq_key)
+                    normalized = normalize_brand(pub, brand_name, canonical_cat)
+                    all_normalized.append(normalized)
+
+        return all_normalized
+
 def main():
     parser = argparse.ArgumentParser(description="Santander Scraper CLI")
     parser.add_argument("--output", required=True, help="Path to save the JSON output")
+    parser.add_argument("--raw-input", help="Path to raw JSON input file collected from browser")
     args = parser.parse_args()
 
     scraper = SantanderScraper()
-    print("Scraping Santander benefits...")
-    all_normalized_promos = scraper.fetch_all()
+    if args.raw_input:
+        print(f"Processing raw input from {args.raw_input}...")
+        all_normalized_promos = scraper.process_raw_input(args.raw_input)
+    else:
+        print("Scraping Santander benefits...")
+        all_normalized_promos = scraper.fetch_all()
+        
     print(f"Fetched {len(all_normalized_promos)} normalized Santander promos.")
 
     if not all_normalized_promos:
-        raise SantanderScraperError("Fetched 0 Santander promotions. This indicates a scraping failure or API block.")
+        raise SantanderScraperError("Fetched 0 Santander promotions. This indicates a scraping failure, empty input, or API block.")
 
     os.makedirs(os.path.dirname(args.output), exist_ok=True)
     with open(args.output, "w", encoding="utf-8") as f:

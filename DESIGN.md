@@ -180,33 +180,40 @@ Para cada rubro_id en ACTIVE_RUBROS:
 
 **URL base:** `https://www.santander.com.ar`
 
+**Protección contra Scraping y Solución Híbrida (Vía Navegador):**
+Debido a bloqueos de seguridad mediante WAF (Akamai) que retornan errores HTTP 403 ante peticiones directas desde Python, se utiliza una estrategia de extracción híbrida:
+1. **Extracción Cruda (Navegador):** Se navega al portal oficial de Santander utilizando un navegador web real. Una vez superado el reto del WAF, se ejecutan peticiones `fetch()` asíncronas concurrentes desde el contexto del navegador para consultar los endpoints de la API bancaria, heredando la sesión y cookies válidas. La información cruda se almacena localmente en `data/santander_raw.json`.
+2. **Normalización (Python):** Se ejecuta el scraper de Santander pasándole la ruta del archivo crudo mediante el parámetro `--raw-input`. El script procesa el archivo JSON, mapea las categorías y normaliza las publicaciones en disco de forma local.
+
+**Cambios en el Esquema de la API:**
+Se identificó que la estructura de respuestas de la API de Santander cambió sus claves de envoltura:
+- La lista de marcas en `/brands` ahora se encuentra bajo la clave `items` (anteriormente `brands`).
+- El detalle de marcas en `/brands/{id}` ahora devuelve las publicaciones bajo la clave `items` (anteriormente `publications`).
+
 **Lógica de extracción completa:**
 ```
-# Fase 1: Categorias estandar (STA)
-STA_CATEGORIES = ["AUT","DEP","DIN","EDU","ESP","FAR","GAS","HOG","IND","JUG","LIB","PELU","PER","SUP","VAR","VIA"]
-Para cada category_code en STA_CATEGORIES:
+# Fase 1: Extracción vía consola del navegador (JS)
+Definir trabajadores concurrentes (ej. 8 trabajadores)
+Para cada category_code en STA_CATEGORIES y EXC_CATEGORIES:
     page = 1
     mientras True:
-        GET /bff-benefits/brands?categories={code}&page={page}&limit=50
-        si brands == []: break
-        Para cada brand en brands:
-            GET /bff-benefits/brands/{brand.id}
-            acumular publicaciones normalizadas
+        GET /bff-benefits/brands?[categories|exclusive]={code}&page={page}&limit=50
+        si items == []: break
+        Para cada brand en items:
+            si brand.id no fue visto:
+                Añadir brand a la cola de extracción
         page += 1
-        sleep(0.5)
+Ejecutar descarga concurrente de detalles de marcas:
+    GET /bff-benefits/brands/{brand.id}
+    Almacenar publicaciones (detail.items) en data/santander_raw.json
 
-# Fase 2: Programas exclusivos (EXC)
-EXC_CATEGORIES = ["CPE","MOD","SEC","SMI","SOR"]
-Para cada exc_code en EXC_CATEGORIES:
-    # mismo loop de paginacion con ?exclusive={exc_code}
+# Fase 2: Normalización en Python con CLI
+python -m scrapers.santander.scraper --raw-input data/santander_raw.json --output data/santander.json
 ```
 
-**Nota:** El scraper omite el parámetro `location` para obtener cobertura nacional completa. Los filtros por provincia se aplican en el frontend (v2).
-
 **Manejo de errores:**
-- HTTP 429: esperar 60s y reintentar.
-- HTTP 503: reintentar 3 veces con backoff exponencial.
-- Timeout (15s): reintentar 3 veces.
+- Reintentos con retroceso (backoff) ante códigos de estado HTTP 429 (Too Many Requests).
+- Deduplicación por clave única `(brand_id, pub_id)` para asegurar la integridad de la base de datos local.
 
 ### 4.4 Schema Unificado — Normalized Discount Object
 
@@ -435,7 +442,7 @@ export function filterDiscounts(discounts, { query, category, bank, day, card })
 | # | Riesgo                                                  | Probabilidad | Impacto | Mitigación                                                                                   |
 |---|---------------------------------------------------------|:------------:|:-------:|----------------------------------------------------------------------------------------------|
 | 1 | **API BBVA rompe estructura de respuesta JSON**         | Media        | Alto    | El campo `raw` preserva la respuesta original. Tests de contrato alertan en CI. Fallback al JSON anterior. |
-| 2 | **Santander añade auth a `/bff-benefits`**              | Media        | Alto    | Monitorear headers en cada ejecución. Plan B: scraper con Playwright. |
+| 2 | **Santander añade auth a `/bff-benefits`**              | Media        | Alto    | Mitigación implementada: Extracción híbrida automatizada utilizando navegador simulado para eludir WAF/Akamai y procesado local CLI. |
 | 3 | **Rate limiting / bloqueo por IP de GH Actions**        | Baja-Media   | Medio   | Delays de 0.3-0.5s entre requests. Reintentos con backoff exponencial. |
 | 4 | **Límite de tamaño del repositorio GitHub**             | Baja         | Medio   | `unified.json` estimado <5 MB. Comprimir si supera 10 MB. Evaluar LFS si el historial crece. |
 | 5 | **Datos desactualizados por fallo silencioso del cron** | Baja         | Medio   | Campo `scraped_at` en `unified.json`. El frontend muestra alerta si >25 horas de antigüedad. |

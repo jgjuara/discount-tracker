@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import re
 import time
 import requests
 
@@ -22,7 +23,12 @@ class BBVAScraper:
         "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36",
     }
 
+    def __init__(self):
+        self._total_pages = {}
+
     def fetch_page(self, rubro_id: int, pager: int) -> list[dict]:
+        if not hasattr(self, "_total_pages"):
+            self._total_pages = {}
         params = {"pager": pager, "rubros": rubro_id}
         retries = 3
         backoff = 1
@@ -40,7 +46,12 @@ class BBVAScraper:
                     raise BBVAScraperError(f"HTTP {res.status_code} error")
                 
                 try:
-                    return res.json().get("data", [])
+                    res_json = res.json()
+                    message = res_json.get("message", "")
+                    match = re.search(r"paginas:\s*(\d+)", message, re.IGNORECASE)
+                    if match:
+                        self._total_pages[rubro_id] = int(match.group(1))
+                    return res_json.get("data", [])
                 except ValueError:
                     raise BBVAScraperError("Invalid JSON response from BBVA API")
             except (requests.Timeout, requests.ConnectionError) as e:
@@ -50,9 +61,13 @@ class BBVAScraper:
                 backoff *= 2
 
     def fetch_all(self, rubro_id: int) -> list[dict]:
+        if not hasattr(self, "_total_pages"):
+            self._total_pages = {}
         all_promos = []
         pager = 0
         while True:
+            if rubro_id in self._total_pages and pager >= self._total_pages[rubro_id]:
+                break
             try:
                 promos = self.fetch_page(rubro_id, pager)
                 if not promos:

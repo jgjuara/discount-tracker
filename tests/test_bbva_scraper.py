@@ -113,11 +113,12 @@ def test_fetch_all_stops_when_data_empty(bbva_list_response, bbva_empty_list_res
 
 def test_pagination_collects_all_pages(bbva_list_response, bbva_empty_list_response):
     """fetch_all() iterates through 3 pages of data, stops on 4th empty page."""
+    resp_page = dict(bbva_list_response, message="Comunicaciones: 6   paginas: 3")
     with patch(f"{SCRAPER_MODULE}.requests.get") as mock_get:
         mock_get.side_effect = [
-            _mock_response(200, bbva_list_response),   # page 0: 2 items
-            _mock_response(200, bbva_list_response),   # page 1: 2 items
-            _mock_response(200, bbva_list_response),   # page 2: 2 items
+            _mock_response(200, resp_page),   # page 0: 2 items
+            _mock_response(200, resp_page),   # page 1: 2 items
+            _mock_response(200, resp_page),   # page 2: 2 items
             _mock_response(200, bbva_empty_list_response),  # page 3: stop
         ]
         with patch(f"{SCRAPER_MODULE}.time.sleep"):
@@ -262,6 +263,30 @@ def test_rate_limit_delay_applied(bbva_list_response, bbva_empty_list_response):
             scraper.fetch_all(rubro_id=170)
 
     assert mock_sleep.call_count >= 1
+
+
+# ===========================================================================
+# 16. Pagination stops when pager >= total pages to prevent infinite loops
+# ===========================================================================
+
+def test_pagination_stops_when_pager_reaches_total_pages(bbva_list_response):
+    """fetch_all() terminates immediately when pager reaches the number of total pages,
+    even if the API repeatedly returns data.
+    """
+    resp_page_1 = dict(bbva_list_response, message="Comunicaciones: 2   paginas: 1")
+    with patch(f"{SCRAPER_MODULE}.requests.get") as mock_get:
+        mock_get.side_effect = [
+            _mock_response(200, resp_page_1),
+            _mock_response(200, resp_page_1),
+            _mock_response(200, resp_page_1),
+        ]
+        with patch(f"{SCRAPER_MODULE}.time.sleep"):
+            scraper_mod = _import_or_skip()
+            scraper = scraper_mod.BBVAScraper()
+            result = scraper.fetch_all(rubro_id=13)
+
+    assert len(result) == 2
+    assert mock_get.call_count == 1
 
 
 # ---------------------------------------------------------------------------

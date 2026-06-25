@@ -334,3 +334,108 @@ def test_retry_logic_on_transient_error(santander_brands_response):
     assert isinstance(result, list)
     assert len(result) == 2
     assert mock_get.call_count == 2
+
+
+# ===========================================================================
+# 16. process_raw_input() parses and normalizes raw JSON list
+# ===========================================================================
+
+def test_process_raw_input_normalizes_and_deduplicates(tmp_path):
+    """process_raw_input() loads raw JSON, maps categories, normalizes, and deduplicates."""
+    raw_data = [
+        {
+            "brand_id": 53,
+            "brand_name": "Bridgestone",
+            "category": "AUT",
+            "type": "STA",
+            "publications": [
+                {
+                    "id": 6823,
+                    "title": "15% off",
+                    "description": "No limit",
+                    "customerDiscount": 15,
+                    "finalQuote": 6,
+                    "fullWeek": True,
+                    "legal": "Vigencia del 01-01-2026 al 31-12-2026",
+                    "payWith": [40]
+                }
+            ]
+        },
+        {
+            "brand_id": 53,
+            "brand_name": "Bridgestone",
+            "category": "AUT",
+            "type": "STA",
+            "publications": [
+                {
+                    "id": 6823,  # Duplicate of the previous one
+                    "title": "15% off",
+                    "description": "No limit",
+                    "customerDiscount": 15,
+                    "finalQuote": 6,
+                    "fullWeek": True,
+                    "legal": "Vigencia del 01-01-2026 al 31-12-2026",
+                    "payWith": [40]
+                },
+                {
+                    "id": 9999,  # Unique publication
+                    "title": "20% off",
+                    "description": "No limit",
+                    "customerDiscount": 20,
+                    "finalQuote": 3,
+                    "fullWeek": False,
+                    "legal": "Vigencia del 01-01-2026 al 31-12-2026",
+                    "payWith": [40]
+                }
+            ]
+        },
+        {
+            "brand_id": 123,
+            "brand_name": "Unknown Brand",
+            "category": "XYZ",  # Not in map -> should map to "bazar"
+            "type": "STA",
+            "publications": [
+                {
+                    "id": 1111,
+                    "title": "Unknown promo",
+                    "description": "desc",
+                    "customerDiscount": 10,
+                    "finalQuote": 0,
+                    "fullWeek": True,
+                    "legal": "",
+                    "payWith": []
+                }
+            ]
+        }
+    ]
+
+    import json
+    raw_file = tmp_path / "raw_test.json"
+    with open(raw_file, "w", encoding="utf-8") as f:
+        json.dump(raw_data, f)
+
+    scraper_mod = _import_or_skip()
+    scraper = scraper_mod.SantanderScraper()
+    result = scraper.process_raw_input(str(raw_file))
+
+    # Expecting 3 unique normalized promotions:
+    # 1. Bridgestone (6823) -> category AUT -> canonical "automotores"
+    # 2. Bridgestone (9999) -> category AUT -> canonical "automotores"
+    # 3. Unknown Brand (1111) -> category XYZ (missing from map) -> canonical "bazar"
+    assert len(result) == 3
+    
+    # Check canonical category mappings
+    b1_pub1 = next(item for item in result if item["id"] == "santander-6823")
+    b1_pub2 = next(item for item in result if item["id"] == "santander-9999")
+    b2_pub = next(item for item in result if item["id"] == "santander-1111")
+    
+    assert b1_pub1["store_name"] == "Bridgestone"
+    assert b1_pub1["canonical_category"] == "automotores"
+    assert b1_pub1["discount_pct"] == 15
+    
+    assert b1_pub2["store_name"] == "Bridgestone"
+    assert b1_pub2["canonical_category"] == "automotores"
+    assert b1_pub2["discount_pct"] == 20
+    
+    assert b2_pub["store_name"] == "Unknown Brand"
+    assert b2_pub["canonical_category"] == "bazar"
