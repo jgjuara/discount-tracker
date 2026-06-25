@@ -150,22 +150,16 @@
 		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
 	}
 
-	/* Scrollable categories */
+	/* Wrap categories */
 	.category-scroll-container {
 		width: 100%;
-		overflow-x: auto;
-		scrollbar-width: none; /* Firefox */
-		padding-bottom: 4px;
-	}
-
-	.category-scroll-container::-webkit-scrollbar {
-		display: none; /* Chrome, Safari, Opera */
 	}
 
 	.category-chips {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 10px;
-		width: max-content;
+		width: 100%;
 		padding: 2px;
 	}
 
